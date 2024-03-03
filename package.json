@@ -1,0 +1,15 @@
+{
+  "name": "nodeserver",
+  "version": "1.0.0",
+  "description": "a node js server for game development purposes",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "author": "shmeglepants",
+  "type" : "module",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^4.7.4"
+  }
+}
