@@ -57,6 +57,14 @@ io.on( 'connection', ( socket ) => {
       mathHelper.MakeQuaternion( returnData.rot.x, returnData.rot.y, returnData.rot.z, returnData.rot.w )
     );
 
+    let users = sessionManagerInstance.grabSessionUsers( returnData.sessionID );
+
+    for ( let j = 0; j < users.length; j++ ) {
+      if ( users[j] != socket.id ) {
+        io.to( users[j] ).emit( 'playerJoined', { socketID : socket.id, userData : sessionManagerInstance.grabUser( socket.id, returnData.sessionID ) } );
+      }
+    }
+
     socket.emit( "sessionJoined", { "message" : "You Have Joined A Session", sessionData : grabSessionState( returnData.sessionID ), socketID : socket.id } );
   });
 

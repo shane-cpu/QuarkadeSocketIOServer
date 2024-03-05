@@ -94,10 +94,10 @@ export class sessionManager {
             if ( playerCount == 0 ) {
                 this.removeSession( sessionID );
             }
-            else {
-                console.log(playerCount);
-                console.log(Object.keys( this.sessions ));
-            }
+            // else {
+            //     console.log(playerCount);
+            //     console.log(Object.keys( this.sessions ));
+            // }
 
             return true
         }
