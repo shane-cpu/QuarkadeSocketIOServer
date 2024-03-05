@@ -5,6 +5,9 @@ export class sessionManager {
         // Current active activities for each session
         this.activities = {};
     }
+    clearUpdatedUsers( sessionID ) {
+        this.sessions[ sessionID ].updatedUsers = [];
+    }
     createSession( socketID ) {
         // make session id
         let sessionID = "S" + socketID;
@@ -12,7 +15,8 @@ export class sessionManager {
         // make session data
         this.sessions[ sessionID ] = {
             userData : {},
-            activityRequests : []
+            activityRequests : [],
+            updatedUsers : []
         };
 
         // make activity data
@@ -43,11 +47,26 @@ export class sessionManager {
             // is there an available activity?
             if (users.includes(socketID)) {
                 // add activity instance to the acivities object
-                return sessions[i]
+                return sessions[i];
             }
         }
 
         return null
+    }
+    grabActiveSessions() {
+        return Object.keys( this.sessions );
+    }
+    grabSessionUsers( sessionID ) {
+        return Object.keys( this.sessions[ sessionID ].userData );
+    }
+    grabUpdatedUsers( sessionID ) {
+        return this.sessions[ sessionID ].updatedUsers.slice();
+    }
+    grabUser( socketID, sessionID ) {
+        return {
+            "position" : this.sessions[ sessionID ].userData[ socketID ].position ,
+            "rotation" : this.sessions[ sessionID ].userData[ socketID ].rotation
+        }
     }
     joinSession( sessionID, socketID, startingLocation, startingRotation ) {
         // make player data
@@ -56,13 +75,13 @@ export class sessionManager {
         // add player data to session using id
         this.sessions[ sessionID ].userData[ socketID ] = playerData;
 
-        console.log(this.sessions[ sessionID ])
+        // console.log(this.sessions[ sessionID ]);
     }
     leaveSession( socketID ) {
         let sessionID = this.findSession( socketID );
 
         if ( sessionID == null ) {
-            return null
+            return null;
         }
         else {
             // remove player info from session
@@ -88,6 +107,11 @@ export class sessionManager {
 
         console.log(`Session ${ sessionID } Was Successfully Removed`);
     }
+    removeActivity( sessionID, activity) {
+        clearInterval( this.activities[ sessionID ][ activity ].interval );
+
+        this.activities[ sessionID ][ activity ] = undefined;
+    }
     startActivity( sessionID, activityInstance ) {
         // grab current activities
         let activities = Object.keys( this.activities[ sessionID ] );
@@ -101,15 +125,10 @@ export class sessionManager {
             }
         }
     }
-    removeActivity( sessionID, activity) {
-        clearInterval( this.activities[ sessionID ][ activity ].interval );
+    updatePlayerData( socketID, sessionID, position, rotation ) {
+        this.sessions[ sessionID ].userData[ socketID ].position = position;
+        this.sessions[ sessionID ].userData[ socketID ].rotation = rotation;
 
-        this.activities[ sessionID ][ activity ] = undefined;
-    }
-    grabActiveSessions() {
-        return Object.keys( this.sessions );
-    }
-    grabSessionUsers(sessionID) {
-        return Object.keys( this.sessions[ sessionID ].userData );
+        this.sessions[ sessionID ].updatedUsers.push( socketID );
     }
 }
