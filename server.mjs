@@ -80,29 +80,14 @@ io.on( 'connection', ( socket ) => {
   });
 
   socket.on('disconnect', ( reason ) => {
-    let activeSession = sessionManagerInstance.findSession( socket.id );
-    let wasInSession = sessionManagerInstance.leaveSession( socket.id );
-
-    if ( wasInSession == null ) {
-      unhandledUsers.splice( unhandledUsers.indexOf(socket.id), 1 );
-
-      console.log( 'User Was Removed From Unhandled Users.' );
+    let newRequest = {
+      "socketID" : socket.id,
+      "requestType" : "playerDisconnected",
     }
-    else {
-      console.log( 'User Was Removed From Current Session.' );
-      
-      if ( activeSession in sessionManagerInstance.sessions ) {
-        let users = sessionManagerInstance.grabSessionUsers( activeSession )
-
-        users.forEach(( userID ) => {
-          io.to( userID ).emit(  'removeUser', { socketID : socket.id });
-        });
-      }
-    }
+    
+    unhandledRequests.push( newRequest )
 
     console.log( `User With ID ${socket.id} Disconnected: ${reason}` );
-
-    // socket.broadcast.emit('playerDisconnect', socket.id);
   });
 });
 
@@ -126,9 +111,34 @@ let mainInterval = setInterval( () => {
           modifiedSessions.push( currentlyHandling[i].sessionID );
         }
       }
+      else if ( currentlyHandling[i].requestType == "playerDisconnected" ) {
+        let activeSession = sessionManagerInstance.findSession( currentlyHandling[i].socketID );
+        let wasInSession = sessionManagerInstance.leaveSession( currentlyHandling[i].socketID );
+
+        if ( wasInSession == null ) {
+          unhandledUsers.splice( unhandledUsers.indexOf(currentlyHandling[i].socketID), 1 );
+
+          console.log( 'User Was Removed From Unhandled Users.' );
+        }
+        else {
+          console.log( 'User Was Removed From Current Session.' );
+          
+          if ( sessionManagerInstance.grabActiveSessions().includes( activeSession ) ) {
+            let users = sessionManagerInstance.grabSessionUsers( activeSession )
+
+            users.forEach(( userID ) => {
+              io.to( userID ).emit(  'removeUser', { socketID : currentlyHandling[i].socketID });
+            });
+          }
+        }
+      }
     }
 
     for ( let i = 0; i < modifiedSessions.length; i++ ) {
+      if ( !sessionManagerInstance.grabActiveSessions().includes( modifiedSessions[i] ) ) {
+        continue;
+      }
+
       let users = sessionManagerInstance.grabSessionUsers( modifiedSessions[i] );
       let updatedUsers = sessionManagerInstance.grabUpdatedUsers( modifiedSessions[i] );
       
